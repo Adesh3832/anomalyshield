@@ -94,11 +94,16 @@ class HealthResponse(BaseModel):
     version: str = "1.0.0"
 
 
+# Configurable thresholds (lowered for higher recall)
+RISK_THRESHOLD_LOW = float(os.environ.get("RISK_THRESHOLD_LOW", 0.25))
+RISK_THRESHOLD_HIGH = float(os.environ.get("RISK_THRESHOLD_HIGH", 0.5))
+
+
 def get_risk_level(score: float) -> str:
     """Convert numeric score to risk level."""
-    if score < 0.3:
+    if score < RISK_THRESHOLD_LOW:
         return "LOW"
-    elif score < 0.7:
+    elif score < RISK_THRESHOLD_HIGH:
         return "MEDIUM"
     else:
         return "HIGH"
@@ -110,10 +115,10 @@ def get_recommendation(risk_score: float, reason_codes: list[str]) -> str:
     if "VELOCITY_MULTI_CITY" in reason_codes:
         return "BLOCK"
     
-    # Combine ML score with rule count
-    if risk_score >= 0.8 or len(reason_codes) >= 2:
+    # Combine ML score with rule count (lowered thresholds)
+    if risk_score >= 0.6 or len(reason_codes) >= 2:
         return "REVIEW"
-    elif risk_score >= 0.5 or len(reason_codes) >= 1:
+    elif risk_score >= 0.4 or len(reason_codes) >= 1:
         return "REVIEW"
     else:
         return "APPROVE"
