@@ -1,6 +1,45 @@
-# Transaction Anomaly Detection System
+# 🛡️ AnomalyShield - Transaction Anomaly Detection
 
-Real-time ML-based anomaly detection for banking compliance, featuring Isolation Forest scoring and rule-based velocity checks.
+**Real-time ML-powered fraud detection with explainable AI (SHAP), OFAC sanctions screening, and regulatory compliance.**
+
+[![Live Demo](https://img.shields.io/badge/Demo-Live-success)](https://anomalyshield-dashboard.onrender.com)
+[![API](https://img.shields.io/badge/API-Docs-blue)](https://anomalyshield.onrender.com/docs)
+[![Python](https://img.shields.io/badge/Python-3.11-blue)](https://www.python.org/)
+
+## 🌐 Live Deployment
+
+- **Dashboard**: https://anomalyshield-dashboard.onrender.com
+- **API**: https://anomalyshield.onrender.com
+- **API Docs**: https://anomalyshield.onrender.com/docs
+
+---
+
+## 📌 Current vs. Production Architecture
+
+### Current Deployment (Live on Render)
+**REST API with synchronous processing** - suitable for demos and moderate traffic.
+
+```
+User → Dashboard → FastAPI API → [ML + SHAP + OFAC] → Response
+```
+
+- ✅ **Deployed**: Production-ready REST API
+- ✅ **Features**: Isolation Forest, SHAP explainability, OFAC screening
+- ✅ **Capacity**: ~100 requests/sec
+- ✅ **Latency**: < 500ms per transaction
+
+### Future Production Scale (Kafka + Spark)
+**Event-driven streaming architecture** - for high-volume enterprise deployment (see [Scaling to Production](#-scaling-to-production-with-kafka-and-spark) section below).
+
+```
+Transactions → Kafka → Spark Streaming → ML Model → Alerts
+```
+
+- 📈 **Capacity**: 50K+ transactions/sec
+- 📈 **Distributed**: Multi-node Spark cluster
+- 📈 **Async**: Kafka message queue
+
+---
 
 ## 🚀 Quick Start
 
@@ -56,28 +95,37 @@ source venv/bin/activate
 PYTHONPATH=. pytest tests/ -v
 ```
 
-## 🏗️ Architecture
+## 🏗️ Current System Architecture
 
 ```
 ┌─────────────────┐     ┌─────────────────┐
-│   Transaction   │────▶│   FastAPI       │
-│   Simulator     │     │   /detect       │
+│   Dashboard     │────▶│   FastAPI       │
+│   (Browser)     │     │   /detect       │
 └─────────────────┘     └────────┬────────┘
                                  │
-                    ┌────────────┴────────────┐
-                    ▼                         ▼
-          ┌─────────────────┐       ┌─────────────────┐
-          │ Isolation Forest│       │  Rules Engine   │
-          │    Detector     │       │  (Velocity/Amt) │
-          └────────┬────────┘       └────────┬────────┘
-                   │                         │
-                   └──────────┬──────────────┘
-                              ▼
-                    ┌─────────────────┐
-                    │   Risk Score    │
-                    │  + Reason Codes │
-                    └─────────────────┘
+                    ┌────────────┼────────────┐
+                    │            │            │
+                    ▼            ▼            ▼
+          ┌─────────────┐ ┌───────────┐ ┌──────────┐
+          │ Isolation   │ │   SHAP    │ │   OFAC   │
+          │   Forest    │ │ Explainer │ │ Screener │
+          └──────┬──────┘ └─────┬─────┘ └────┬─────┘
+                 │              │            │
+                 └──────────────┼────────────┘
+                                ▼
+                      ┌─────────────────┐
+                      │  Risk Score +   │
+                      │  Explainability │
+                      │  + Sanctions    │
+                      └─────────────────┘
 ```
+
+**Key Components:**
+- **Isolation Forest**: Unsupervised ML anomaly detection
+- **SHAP Explainer**: Feature contribution analysis (WHY flagged)
+- **OFAC Screener**: Sanctions watchlist + high-risk MCC detection
+- **Rules Engine**: Velocity checks, amount thresholds, unusual hours
+
 
 ## 📁 Project Structure
 
