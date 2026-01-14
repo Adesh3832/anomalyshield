@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnomalyShield | Banking Compliance Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1f2937;
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #a855f7;
+            --gradient-1: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+            --gradient-2: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            --gradient-danger: linear-gradient(135deg, #ef4444 0%, #f59e0b 100%);
+            --gradient-critical: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glow-orb {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glow-orb-1 {
+            background: var(--accent-blue);
+            top: -200px;
+            right: -200px;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .glow-orb-2 {
+            background: var(--accent-cyan);
+            bottom: -200px;
+            left: -200px;
+            animation: float 25s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(0, 0);
+            }
+
+            50% {
+                transform: translate(50px, 50px);
+            }
+        }
+
+        header {
+            position: relative;
+            z-index: 10;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .logo-text span {
+            color: var(--accent-cyan);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card.approved .stat-value {
+            background: var(--gradient-2);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .stat-card.danger .stat-value {
+            background: var(--gradient-danger);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .stat-card.sanctions .stat-value {
+            background: var(--gradient-critical);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 1.5rem;
+        }
+
+        /* Form Panel */
+        .form-panel {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .form-group {
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        /* Scenario Buttons */
+        .scenario-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .scenario-title {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .scenario-btn {
+            padding: 10px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .scenario-btn:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--accent-blue);
+        }
+
+        .scenario-btn.danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--accent-red);
+        }
+
+        .scenario-btn .icon {
+            font-size: 1rem;
+            margin-right: 6px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--gradient-1);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .result-display {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 280px;
+        }
+
+        .result-placeholder {
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .result-placeholder svg {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        /* Risk Display */
+        .risk-display {
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+            width: 100%;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .risk-score-circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            position: relative;
+        }
+
+        .risk-score-circle::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            padding: 3px;
+            background: var(--gradient-1);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+
+        .risk-score-circle.low::before {
+            background: var(--gradient-2);
+        }
+
+        .risk-score-circle.high::before {
+            background: var(--gradient-danger);
+        }
+
+        .risk-score-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .risk-score-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .risk-level-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .risk-level-badge.LOW {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .risk-level-badge.MEDIUM {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--accent-yellow);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .risk-level-badge.HIGH {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .recommendation-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .recommendation-badge.APPROVE {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+        }
+
+        .recommendation-badge.REVIEW {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-yellow);
+        }
+
+        .recommendation-badge.BLOCK {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+        }
+
+        /* Sanctions Alert Banner */
+        .sanctions-banner {
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.2) 0%, rgba(185, 28, 28, 0.2) 100%);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 1rem;
+            animation: alertPulse 2s infinite;
+        }
+
+        @keyframes alertPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        .sanctions-banner-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            color: var(--accent-red);
+            font-size: 0.875rem;
+            margin-bottom: 6px;
+        }
+
+        .sanctions-banner-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .sanctions-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: var(--accent-red);
+            color: white;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+
+        /* Reason Codes */
+        .reason-codes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 0.75rem;
+        }
+
+        .reason-code {
+            padding: 4px 10px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--accent-red);
+            font-family: 'Monaco', monospace;
+        }
+
+        .reason-code.warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.3);
+            color: var(--accent-yellow);
+        }
+
+        /* Transaction Log */
+        .transaction-log {
+            margin-top: 1rem;
+        }
+
+        .log-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .log-list {
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .log-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 0.75rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .log-item .risk-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .log-item .risk-indicator.low {
+            background: var(--accent-green);
+        }
+
+        .log-item .risk-indicator.medium {
+            background: var(--accent-yellow);
+        }
+
+        .log-item .risk-indicator.high {
+            background: var(--accent-red);
+        }
+
+        .log-item .txn-id {
+            font-family: monospace;
+            color: var(--accent-cyan);
+        }
+
+        .log-item .amount {
+            margin-left: auto;
+            font-weight: 600;
+        }
+
+        .log-item .sanction-flag {
+            color: var(--accent-red);
+            font-size: 0.9rem;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 80vh;
+            overflow: hidden;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .modal-title {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-title .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .modal-title .badge.blocked {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+        }
+
+        .modal-title .badge.approved {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .txn-detail-card {
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .txn-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .txn-id {
+            font-family: monospace;
+            color: var(--accent-cyan);
+            font-size: 0.8rem;
+        }
+
+        .txn-time {
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+        }
+
+        .txn-score-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .txn-score-value.low {
+            color: var(--accent-green);
+        }
+
+        .txn-score-value.medium {
+            color: var(--accent-yellow);
+        }
+
+        .txn-score-value.high {
+            color: var(--accent-red);
+        }
+
+        .txn-details-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .txn-detail-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+
+        .txn-detail-label {
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .txn-detail-value {
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .txn-detail-value.amount {
+            color: var(--accent-cyan);
+        }
+
+        .txn-reason-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            padding: 0.75rem;
+        }
+
+        .txn-reason-title {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .txn-reason-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 0.5rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+
+        .txn-reason-item.approved {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .txn-reason-code {
+            font-family: monospace;
+            font-size: 0.7rem;
+            color: var(--accent-red);
+            font-weight: 600;
+        }
+
+        .txn-reason-item.approved .txn-reason-code {
+            color: var(--accent-green);
+        }
+
+        .txn-reason-desc {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            line-height: 1.3;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(59, 130, 246, 0.2);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            color: var(--accent-red);
+            text-align: center;
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .txn-details-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-grid,
+            .scenario-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-grid"></div>
+    <div class="glow-orb glow-orb-1"></div>
+    <div class="glow-orb glow-orb-2"></div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-title">Transaction Details</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+        </div>
+    </div>
+
+    <header>
+        <div class="logo">
+            <div class="logo-icon">🛡️</div>
+            <div class="logo-text">Anomaly<span>Shield</span></div>
+        </div>
+        <div class="status-badge">
+            <div class="status-dot"></div>
+            <span id="api-status">Connecting...</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card" onclick="showTransactionDetails('all')">
+                <div class="stat-label">📊 Analyzed</div>
+                <div class="stat-value" id="total-transactions">0</div>
+            </div>
+            <div class="stat-card approved" onclick="showTransactionDetails('approved')">
+                <div class="stat-label">✅ Approved</div>
+                <div class="stat-value" id="approved-count">0</div>
+            </div>
+            <div class="stat-card" onclick="showTransactionDetails('review')">
+                <div class="stat-label">⚠️ Review</div>
+                <div class="stat-value" id="review-count">0</div>
+            </div>
+            <div class="stat-card danger" onclick="showTransactionDetails('blocked')">
+                <div class="stat-label">🚫 Blocked</div>
+                <div class="stat-value" id="blocked-count">0</div>
+            </div>
+            <div class="stat-card sanctions" onclick="showTransactionDetails('sanctions')">
+                <div class="stat-label">🔴 OFAC Hits</div>
+                <div class="stat-value" id="sanctions-count">0</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-grid">
+            <!-- Form Panel -->
+            <div class="form-panel">
+                <h2 class="panel-title"><span>📝</span> Transaction Details</h2>
+                <form id="transaction-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Transaction ID</label>
+                            <input type="text" id="transaction_id" placeholder="Auto-generated">
+                        </div>
+                        <div class="form-group">
+                            <label>User ID</label>
+                            <input type="text" id="user_id" value="user_001" required>
+                        </div>
+                        <div class="form-group">
+                            <label>👤 User Name (OFAC Check)</label>
+                            <input type="text" id="user_name" placeholder="John Smith">
+                        </div>
+                        <div class="form-group">
+                            <label>Amount ($)</label>
+                            <input type="number" id="amount" value="500" min="0" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>🌍 Country (Sanctions)</label>
+                            <select id="country">
+                                <option value="">-- Select --</option>
+                                <option value="United States">United States</option>
+                                <option value="India">India</option>
+                                <option value="United Kingdom">United Kingdom</option>
+                                <option value="Russia">Russia ⚠️</option>
+                                <option value="Iran">Iran 🚫</option>
+                                <option value="North Korea">North Korea 🚫</option>
+                                <option value="Syria">Syria 🚫</option>
+                                <option value="Cuba">Cuba 🚫</option>
+                                <option value="Myanmar">Myanmar ⚠️</option>
+                                <option value="Venezuela">Venezuela ⚠️</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>📍 Location</label>
+                            <select id="location" required>
+                                <option value="Mumbai">Mumbai</option>
+                                <option value="Delhi">Delhi</option>
+                                <option value="Bangalore">Bangalore</option>
+                                <option value="Chennai">Chennai</option>
+                                <option value="New York">New York</option>
+                                <option value="London">London</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>🏪 Merchant Type</label>
+                            <select id="merchant_type" required>
+                                <option value="grocery">Grocery</option>
+                                <option value="electronics">Electronics</option>
+                                <option value="restaurant">Restaurant</option>
+                                <option value="fuel">Fuel</option>
+                                <option value="travel">Travel</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>📋 MCC Code</label>
+                            <select id="mcc_code">
+                                <option value="">-- Standard --</option>
+                                <option value="5411">5411 - Grocery</option>
+                                <option value="5812">5812 - Restaurant</option>
+                                <option value="7995">7995 - Gambling 🎰</option>
+                                <option value="6051">6051 - Crypto 🔗</option>
+                                <option value="6540">6540 - Wire Transfer 💸</option>
+                                <option value="5944">5944 - Jewelry 💎</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>⏰ Timestamp</label>
+                            <input type="datetime-local" id="timestamp" required>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">🔍 Analyze Risk</button>
+                        <button type="button" class="btn btn-secondary" onclick="generateRandom()">🎲 Random</button>
+                    </div>
+                </form>
+
+                <!-- Test Scenarios -->
+                <div class="scenario-section">
+                    <div class="scenario-title">🧪 Test Scenarios</div>
+                    <div class="scenario-grid">
+                        <button class="scenario-btn danger" onclick="testOFACMatch()">
+                            <span class="icon">🚨</span> OFAC SDN Match
+                        </button>
+                        <button class="scenario-btn danger" onclick="testSanctionedCountry()">
+                            <span class="icon">🌍</span> Sanctioned Country
+                        </button>
+                        <button class="scenario-btn" onclick="testHighRiskMCC()">
+                            <span class="icon">🎰</span> Gambling MCC
+                        </button>
+                        <button class="scenario-btn" onclick="testCryptoMCC()">
+                            <span class="icon">🔗</span> Crypto Exchange
+                        </button>
+                        <button class="scenario-btn danger" onclick="simulateVelocityAttack()">
+                            <span class="icon">⚡</span> Velocity Attack
+                        </button>
+                        <button class="scenario-btn" onclick="testHighAmount()">
+                            <span class="icon">💰</span> High Amount
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel">
+                <h2 class="panel-title"><span>📊</span> Risk Analysis</h2>
+                <div class="result-display" id="result-display">
+                    <div class="result-placeholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <p>Submit a transaction to see risk analysis</p>
+                        <p style="font-size: 0.75rem; margin-top: 0.5rem;">Try the test scenarios for OFAC & sanctions
+                            demos</p>
+                    </div>
+                </div>
+                <div class="transaction-log">
+                    <div class="log-title">Recent Transactions</div>
+                    <div class="log-list" id="log-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let transactionCount = 0;
+        let stats = { approved: 0, review: 0, blocked: 0, sanctions: 0 };
+        let allTransactions = [];
+
+        const reasonDescriptions = {
+            'VELOCITY_MULTI_CITY': 'Multiple transactions from different cities within 60 seconds',
+            'HIGH_AMOUNT': 'Transaction exceeds $10,000 threshold',
+            'UNUSUAL_HOUR': 'Transaction during unusual hours (2-5 AM)',
+            'OFAC_SDN_MATCH': 'OFAC SDN Watchlist Match - BLOCKED',
+            'OFAC_SDN_FUZZY': 'Potential OFAC SDN Match - Review Required',
+            'SANCTIONED_COUNTRY': 'Transaction from sanctioned country - BLOCKED',
+            'HIGH_RISK_COUNTRY': 'High-risk jurisdiction (FATF monitored)',
+            'MCC_GAMBLING': 'High-risk MCC: Gambling/Casino',
+            'MCC_CRYPTO': 'High-risk MCC: Cryptocurrency',
+            'MCC_MONEY_SERVICES': 'High-risk MCC: Money Services'
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setCurrentTimestamp();
+            checkApiStatus();
+            generateTransactionId();
+        });
+
+        function setCurrentTimestamp() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('timestamp').value = now.toISOString().slice(0, 16);
+        }
+
+        function generateTransactionId() {
+            document.getElementById('transaction_id').value = 'txn_' + Math.random().toString(36).substr(2, 10);
+        }
+
+        async function checkApiStatus() {
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                document.getElementById('api-status').textContent = data.model_loaded ? 'OFAC + ML Ready' : 'Loading...';
+            } catch (error) {
+                document.getElementById('api-status').textContent = 'API Offline';
+                document.querySelector('.status-dot').style.background = '#ef4444';
+            }
+        }
+
+        document.getElementById('transaction-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await analyzeTransaction();
+        });
+
+        async function analyzeTransaction() {
+            const resultDisplay = document.getElementById('result-display');
+            resultDisplay.innerHTML = '<div class="loading"><div class="spinner"></div><p>Screening...</p></div>';
+
+            const transaction = {
+                transaction_id: document.getElementById('transaction_id').value || 'txn_' + Date.now(),
+                user_id: document.getElementById('user_id').value,
+                user_name: document.getElementById('user_name').value || null,
+                amount: parseFloat(document.getElementById('amount').value),
+                location: document.getElementById('location').value,
+                country: document.getElementById('country').value || null,
+                timestamp: new Date(document.getElementById('timestamp').value).toISOString(),
+                merchant_type: document.getElementById('merchant_type').value,
+                mcc_code: document.getElementById('mcc_code').value || null
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/detect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(transaction)
+                });
+                if (!response.ok) throw new Error('API Error');
+                const result = await response.json();
+                displayResult(result, transaction);
+                updateStats(result);
+                addToLog(result, transaction);
+                storeTransaction(result, transaction);
+                generateTransactionId();
+            } catch (error) {
+                resultDisplay.innerHTML = '<div class="error-message">⚠️ API Error - Ensure server is running</div>';
+            }
+        }
+
+        function storeTransaction(result, transaction) {
+            allTransactions.unshift({
+                ...transaction,
+                risk_score: result.risk_score,
+                risk_level: result.risk_level,
+                reason_codes: result.reason_codes,
+                reason_details: result.reason_details || {},
+                sanctions_alerts: result.sanctions_alerts || [],
+                recommendation: result.recommendation,
+                analyzed_at: new Date().toISOString()
+            });
+            if (allTransactions.length > 100) allTransactions = allTransactions.slice(0, 100);
+        }
+
+        function displayResult(result, transaction) {
+            const riskLevel = result.risk_level.toLowerCase();
+            const hasSanctions = result.sanctions_alerts && result.sanctions_alerts.length > 0;
+            const criticalSanction = result.sanctions_alerts?.find(a => a.severity === 'CRITICAL');
+
+            let sanctionsBanner = '';
+            if (hasSanctions) {
+                const alerts = result.sanctions_alerts.map(a => `
+                    <div style="margin-top: 6px; padding: 6px; background: rgba(0,0,0,0.2); border-radius: 4px;">
+                        <strong>${a.type}</strong> <span class="sanctions-badge">${a.severity}</span><br>
+                        <span style="font-size: 0.7rem;">${a.description}</span>
+                    </div>
+                `).join('');
+
+                sanctionsBanner = `
+                    <div class="sanctions-banner">
+                        <div class="sanctions-banner-title">
+                            🚨 SANCTIONS ALERT ${criticalSanction ? '- TRANSACTION BLOCKED' : ''}
+                        </div>
+                        ${alerts}
+                    </div>
+                `;
+            }
+
+            const reasonCodesHtml = result.reason_codes.length > 0
+                ? `<div class="reason-codes">${result.reason_codes.map(code =>
+                    `<span class="reason-code ${code.includes('MCC') ? 'warning' : ''}">${code}</span>`
+                ).join('')}</div>`
+                : '<p style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 0.5rem;">No compliance rules triggered</p>';
+
+            // Build explainability section if available
+            let explainabilityHtml = '';
+            if (result.explainability && result.explainability.contributions && result.explainability.contributions.length > 0) {
+                const contributions = result.explainability.contributions.slice(0, 5); // Top 5 factors
+                const maxContrib = Math.max(...contributions.map(c => c.contribution_pct));
+
+                const bars = contributions.map(c => {
+                    const barWidth = Math.max(5, (c.contribution_pct / maxContrib) * 100);
+                    const barColor = c.direction === 'increases_risk'
+                        ? 'linear-gradient(90deg, #ef4444, #f59e0b)'
+                        : c.direction === 'decreases_risk'
+                            ? 'linear-gradient(90deg, #10b981, #06b6d4)'
+                            : 'linear-gradient(90deg, #6b7280, #9ca3af)';
+                    const icon = c.direction === 'increases_risk' ? '↑' : c.direction === 'decreases_risk' ? '↓' : '•';
+
+                    return `
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                            <div style="width: 90px; font-size: 0.65rem; color: var(--text-secondary); text-align: right;">${c.display_name}</div>
+                            <div style="flex: 1; height: 16px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+                                <div style="width: ${barWidth}%; height: 100%; background: ${barColor}; border-radius: 4px; display: flex; align-items: center; justify-content: flex-end; padding-right: 6px;">
+                                    <span style="font-size: 0.6rem; color: white; font-weight: 600;">${c.contribution_pct.toFixed(0)}%</span>
+                                </div>
+                            </div>
+                            <div style="width: 16px; font-size: 0.75rem;">${icon}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                const summary = result.explainability.summary || 'Feature contributions to anomaly score';
+
+                explainabilityHtml = `
+                    <div style="margin-top: 1rem; padding: 12px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; text-align: left;">
+                        <div style="font-size: 0.7rem; color: var(--accent-cyan); font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                            🧠 ML Explainability (SHAP)
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--text-secondary); margin-bottom: 10px;">${summary}</div>
+                        ${bars}
+                        <div style="font-size: 0.55rem; color: var(--text-secondary); margin-top: 6px; text-align: center;">
+                            ↑ increases risk | ↓ decreases risk
+                        </div>
+                    </div>
+                `;
+            }
+
+            const icons = { APPROVE: '✅', REVIEW: '⚠️', BLOCK: '🚫' };
+
+            document.getElementById('result-display').innerHTML = `
+                <div class="risk-display">
+                    ${sanctionsBanner}
+                    <div class="risk-score-circle ${riskLevel}">
+                        <div class="risk-score-value">${(result.risk_score * 100).toFixed(0)}</div>
+                        <div class="risk-score-label">Risk Score</div>
+                    </div>
+                    <div class="risk-level-badge ${result.risk_level}">${result.risk_level} RISK</div>
+                    <div class="recommendation-badge ${result.recommendation}">
+                        ${icons[result.recommendation]} ${result.recommendation}
+                    </div>
+                    ${reasonCodesHtml}
+                    ${explainabilityHtml}
+                </div>
+            `;
+        }
+
+        function updateStats(result) {
+            transactionCount++;
+            if (result.recommendation === 'APPROVE') stats.approved++;
+            else if (result.recommendation === 'REVIEW') stats.review++;
+            else if (result.recommendation === 'BLOCK') stats.blocked++;
+            if (result.sanctions_alerts?.length > 0) stats.sanctions++;
+
+            document.getElementById('total-transactions').textContent = transactionCount;
+            document.getElementById('approved-count').textContent = stats.approved;
+            document.getElementById('review-count').textContent = stats.review;
+            document.getElementById('blocked-count').textContent = stats.blocked;
+            document.getElementById('sanctions-count').textContent = stats.sanctions;
+        }
+
+        function addToLog(result, transaction) {
+            const logList = document.getElementById('log-list');
+            const riskLevel = result.risk_level.toLowerCase();
+            const hasSanction = result.sanctions_alerts?.length > 0;
+
+            const logItem = document.createElement('div');
+            logItem.className = 'log-item';
+            logItem.innerHTML = `
+                <div class="risk-indicator ${riskLevel}"></div>
+                ${hasSanction ? '<span class="sanction-flag">🔴</span>' : ''}
+                <span class="txn-id">${result.transaction_id.slice(0, 12)}</span>
+                <span>${transaction.country || transaction.location}</span>
+                <span class="amount">$${transaction.amount.toLocaleString()}</span>
+            `;
+            logList.insertBefore(logItem, logList.firstChild);
+            while (logList.children.length > 8) logList.removeChild(logList.lastChild);
+        }
+
+        function generateRandom() {
+            const cities = ['Mumbai', 'Delhi', 'New York', 'London'];
+            document.getElementById('user_id').value = 'user_' + String(Math.floor(Math.random() * 100)).padStart(3, '0');
+            document.getElementById('user_name').value = '';
+            document.getElementById('amount').value = Math.floor(Math.random() * 2000 + 50);
+            document.getElementById('location').value = cities[Math.floor(Math.random() * cities.length)];
+            document.getElementById('country').value = '';
+            document.getElementById('mcc_code').value = '';
+            setCurrentTimestamp();
+            generateTransactionId();
+        }
+
+        // Test Scenarios
+        function testOFACMatch() {
+            document.getElementById('user_name').value = 'Mohammad Ahmadi';
+            document.getElementById('country').value = 'Iran';
+            document.getElementById('amount').value = 5000;
+            document.getElementById('mcc_code').value = '';
+            generateTransactionId();
+            alert('Testing: OFAC SDN Match\n\nUser "Mohammad Ahmadi" is on the mock OFAC SDN list.\nClick Analyze Risk to see the BLOCKED result.');
+        }
+
+        function testSanctionedCountry() {
+            document.getElementById('user_name').value = 'John Smith';
+            document.getElementById('country').value = 'North Korea';
+            document.getElementById('amount').value = 1000;
+            document.getElementById('mcc_code').value = '';
+            generateTransactionId();
+            alert('Testing: Sanctioned Country\n\nNorth Korea is under comprehensive US sanctions.\nClick Analyze Risk to see the BLOCKED result.');
+        }
+
+        function testHighRiskMCC() {
+            document.getElementById('user_name').value = '';
+            document.getElementById('country').value = 'United States';
+            document.getElementById('amount').value = 500;
+            document.getElementById('mcc_code').value = '7995';
+            generateTransactionId();
+            alert('Testing: Gambling MCC\n\nMCC 7995 (Betting/Casino) is flagged for enhanced monitoring.\nClick Analyze Risk to see the alert.');
+        }
+
+        function testCryptoMCC() {
+            document.getElementById('user_name').value = '';
+            document.getElementById('country').value = 'United States';
+            document.getElementById('amount').value = 10000;
+            document.getElementById('mcc_code').value = '6051';
+            generateTransactionId();
+            alert('Testing: Crypto Exchange MCC\n\nMCC 6051 (Cryptocurrency) is flagged for AML monitoring.\nClick Analyze Risk to see the alert.');
+        }
+
+        function testHighAmount() {
+            document.getElementById('amount').value = 25000;
+            document.getElementById('user_name').value = '';
+            document.getElementById('country').value = '';
+            document.getElementById('mcc_code').value = '';
+            generateTransactionId();
+            alert('Testing: High Amount\n\nTransaction over $10,000 triggers HIGH_AMOUNT rule.\nClick Analyze Risk to see the alert.');
+        }
+
+        async function simulateVelocityAttack() {
+            const cities = ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Kolkata'];
+            const userId = 'user_attack_' + Math.floor(Math.random() * 100);
+            alert('Simulating: Velocity Attack\n\n5 transactions from different cities for ' + userId);
+
+            for (let i = 0; i < 5; i++) {
+                document.getElementById('user_id').value = userId;
+                document.getElementById('user_name').value = '';
+                document.getElementById('amount').value = Math.floor(Math.random() * 500 + 100);
+                document.getElementById('location').value = cities[i % cities.length];
+                document.getElementById('country').value = '';
+                document.getElementById('mcc_code').value = '';
+                generateTransactionId();
+                setCurrentTimestamp();
+                await analyzeTransaction();
+                await new Promise(r => setTimeout(r, 400));
+            }
+        }
+
+        // Modal functions
+        function showTransactionDetails(filter) {
+            const modal = document.getElementById('modal-overlay');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+
+            let filtered = [];
+            let title = '';
+            let badgeClass = '';
+
+            switch (filter) {
+                case 'approved':
+                    filtered = allTransactions.filter(t => t.recommendation === 'APPROVE');
+                    title = 'Approved'; badgeClass = 'approved'; break;
+                case 'review':
+                    filtered = allTransactions.filter(t => t.recommendation === 'REVIEW');
+                    title = 'Under Review'; badgeClass = ''; break;
+                case 'blocked':
+                    filtered = allTransactions.filter(t => t.recommendation === 'BLOCK');
+                    title = 'Blocked'; badgeClass = 'blocked'; break;
+                case 'sanctions':
+                    filtered = allTransactions.filter(t => t.sanctions_alerts?.length > 0);
+                    title = 'OFAC/Sanctions Hits'; badgeClass = 'blocked'; break;
+                default:
+                    filtered = allTransactions;
+                    title = 'All Transactions'; badgeClass = ''; break;
+            }
+
+            modalTitle.innerHTML = `${title} <span class="badge ${badgeClass}">${filtered.length}</span>`;
+
+            if (filtered.length === 0) {
+                modalBody.innerHTML = '<div class="empty-state"><p>No transactions in this category</p></div>';
+            } else {
+                modalBody.innerHTML = filtered.map(txn => renderTxnCard(txn, filter)).join('');
+            }
+            modal.classList.add('active');
+        }
+
+        function renderTxnCard(txn, filter) {
+            const riskLevel = txn.risk_level.toLowerCase();
+            const time = new Date(txn.timestamp).toLocaleString();
+
+            let reasonHtml = '';
+            if (txn.reason_codes?.length > 0) {
+                reasonHtml = txn.reason_codes.map(code => {
+                    const detail = txn.reason_details?.[code] || reasonDescriptions[code] || 'Rule triggered';
+                    return `<div class="txn-reason-item"><div><div class="txn-reason-code">${code}</div><div class="txn-reason-desc">${detail}</div></div></div>`;
+                }).join('');
+            } else if (filter === 'approved') {
+                reasonHtml = `<div class="txn-reason-item approved"><div><div class="txn-reason-code">ALL_CHECKS_PASSED</div><div class="txn-reason-desc">All compliance checks passed. ML score: ${(txn.risk_score * 100).toFixed(1)}%</div></div></div>`;
+            }
+
+            let sanctionsHtml = '';
+            if (txn.sanctions_alerts?.length > 0) {
+                sanctionsHtml = `<div class="txn-reason-section" style="background: rgba(239, 68, 68, 0.1); margin-top: 0.5rem;">
+                    <div class="txn-reason-title">🚨 Sanctions Alerts</div>
+                    ${txn.sanctions_alerts.map(a => `<div class="txn-reason-item"><div><div class="txn-reason-code">${a.type} [${a.severity}]</div><div class="txn-reason-desc">${a.description}</div></div></div>`).join('')}
+                </div>`;
+            }
+
+            return `
+                <div class="txn-detail-card">
+                    <div class="txn-header">
+                        <div><div class="txn-id">${txn.transaction_id}</div><div class="txn-time">${time}</div></div>
+                        <div><div class="txn-score-value ${riskLevel}">${(txn.risk_score * 100).toFixed(0)}%</div></div>
+                    </div>
+                    <div class="txn-details-grid">
+                        <div class="txn-detail-item"><div class="txn-detail-label">User</div><div class="txn-detail-value">${txn.user_name || txn.user_id}</div></div>
+                        <div class="txn-detail-item"><div class="txn-detail-label">Amount</div><div class="txn-detail-value amount">$${txn.amount.toLocaleString()}</div></div>
+                        <div class="txn-detail-item"><div class="txn-detail-label">Country</div><div class="txn-detail-value">${txn.country || txn.location}</div></div>
+                        <div class="txn-detail-item"><div class="txn-detail-label">MCC</div><div class="txn-detail-value">${txn.mcc_code || 'Standard'}</div></div>
+                    </div>
+                    ${reasonHtml ? `<div class="txn-reason-section"><div class="txn-reason-title">Reason Codes</div>${reasonHtml}</div>` : ''}
+                    ${sanctionsHtml}
+                </div>
+            `;
+        }
+
+        function closeModal() { document.getElementById('modal-overlay').classList.remove('active'); }
+        document.getElementById('modal-overlay').addEventListener('click', (e) => { if (e.target.id === 'modal-overlay') closeModal(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+    </script>
+</body>
+
+</html>

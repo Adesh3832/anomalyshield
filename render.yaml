@@ -1,0 +1,35 @@
+services:
+  # FastAPI Backend
+  - type: web
+    name: anomalyshield-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt && python -m src.detector
+    startCommand: uvicorn src.api:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PYTHONPATH
+        value: .
+    healthCheckPath: /health
+    autoDeploy: true
+  
+  # Static Site for Dashboard
+  - type: web
+    name: anomalyshield-dashboard
+    runtime: static
+    buildCommand: echo "No build needed"
+    staticPublishPath: .
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /dashboard.html
+    headers:
+      - path: /*
+        name: Access-Control-Allow-Origin
+        value: "*"
+    envVars:
+      - key: API_URL
+        fromService:
+          type: web
+          name: anomalyshield-api
+          envVarKey: RENDER_EXTERNAL_URL
